@@ -1,0 +1,158 @@
+version: '3.7'
+
+services:
+  master1:
+    image: an2071497/hadoopimg:1.13
+    container_name: master1
+    hostname: master1
+    environment:
+      - ROLE=master
+    restart: always
+    networks:
+      - cluster_net
+    ports:
+      - "9879:9870"
+      - "8078:8088"
+    volumes:
+      - ./shared:/shared
+    healthcheck:
+      test: ["CMD-SHELL", "jps | grep -E 'QuorumPeerMain|NameNode|DFSZKFailoverController|ResourceManager|JournalNode'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    mem_limit: 3G
+    cpus: 1
+
+  master2:
+    image: an2071497/hadoopimg:1.13
+    container_name: master2
+    hostname: master2
+    environment:
+      - ROLE=master
+    restart: always
+    networks:
+      - cluster_net
+    ports:
+      - "9880:9870"
+      - "8079:8088"
+    volumes:
+      - ./shared:/shared
+    healthcheck:
+      test: ["CMD-SHELL", "jps | grep -E 'QuorumPeerMain|NameNode|DFSZKFailoverController|ResourceManager|JournalNode'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    mem_limit: 3G
+    cpus: 1
+
+  master3:
+    image: an2071497/hadoopimg:1.13
+    container_name: master3
+    hostname: master3
+    environment:
+      - ROLE=master
+    restart: always
+    networks:
+      - cluster_net
+    ports:
+      - "9881:9870"
+      - "8080:8088"
+    volumes:
+      - ./shared:/shared
+    healthcheck:
+      test: ["CMD-SHELL", "jps | grep -E 'QuorumPeerMain|NameNode|DFSZKFailoverController|ResourceManager|JournalNode'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    mem_limit: 3G
+    cpus: 1
+
+  worker:
+    image: an2071497/hadoopimg:1.13
+    environment:
+      - ROLE=worker
+    restart: always
+    networks:
+      - cluster_net
+    volumes:
+      - ./shared:/shared
+    depends_on:
+      master1:
+        condition: service_healthy
+      master2:
+        condition: service_healthy
+      master3:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "jps | grep -E 'DataNode|NodeManager'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    mem_limit: 4G
+    cpus: 3
+
+  hb-master1:
+    image: an2071497/hbase:13
+    hostname: hb-master1
+    environment:
+      - HBASE_ROLE=master
+    depends_on:
+      - worker
+    volumes:
+      - ./hbase/entrypoint.sh:/entrypoint.sh
+      - ./hbase/hbase-site.xml:/usr/local/hbase/conf/hbase-site.xml
+    networks:
+      - cluster_net
+    ports:
+      - "16000:16000"
+      - "16010:16010"
+
+  hb-master2:
+    image: an2071497/hbase:13
+    hostname: hb-master2
+    environment:
+      - HBASE_ROLE=master
+    volumes:
+      - ./hbase/entrypoint.sh:/entrypoint.sh
+      - ./hbase/hbase-site.xml:/usr/local/hbase/conf/hbase-site.xml
+    networks:
+      - cluster_net
+    depends_on:
+      - worker
+    ports:
+      - "16001:16000"
+      - "16011:16010"
+
+  hb-region-servers1:
+    image: an2071497/hbase:13
+    hostname: hb-region-servers1
+    environment:
+      - HBASE_ROLE=regionserver
+    depends_on:
+      - hb-master1
+      - hb-master2
+    volumes:
+      - ./hbase/entrypoint.sh:/entrypoint.sh
+      - ./hbase/hbase-site.xml:/usr/local/hbase/conf/hbase-site.xml
+    networks:
+      - cluster_net
+
+  hb-region-servers2:
+    image: an2071497/hbase:13
+    hostname: hb-region-servers2
+    environment:
+      - HBASE_ROLE=regionserver
+    depends_on:
+      - hb-master1
+      - hb-master2
+    volumes:
+      - ./hbase/entrypoint.sh:/entrypoint.sh
+      - ./hbase/hbase-site.xml:/usr/local/hbase/conf/hbase-site.xml
+    networks:
+      - cluster_net
+
+networks:
+  cluster_net:
+    driver: bridge
+
+volumes:
