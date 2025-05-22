@@ -58,7 +58,6 @@ Performance optimizations enhance scalability and efficiency:
 - **Row Key Design**: Reversed URLs (via `utils.reverseUrl`) ensure even region distribution, optimizing load balancing.
 - **Compaction**: Configured with a 7-day interval (`hbase.hregion.majorcompaction=604800000`) to maintain storage efficiency.
 - **Connection Management**: Try-with-resources for `Connection` and `Table` ensures resource efficiency.
-- **JMX Monitoring**: Enabled on port 10102 for real-time performance metrics.
 
 #### 1.1.4 Data Ingestion Processes
 Data ingestion supports flexible crawling and storage:
@@ -261,46 +260,53 @@ public static void main(String[] args) {
  mvn clean compile exec:java -Dexec.mainClass="org.example.Main"
  ```
  
-![[Screenshot from 2025-05-22 19-18-08.png]]
 ### 2.2 Configuration Files
 - **hbase-site.xml**:
 ```xml
 <configuration>
-<property>
-  <name>hbase.zookeeper.quorum</name>
-  <value>172.20.0.4,172.20.0.2,172.20.0.3</value>
-  <description>ZooKeeper quorum for HBase coordination.</description>
-</property>
-<property>
-  <name>hbase.zookeeper.property.clientPort</name>
-  <value>2181</value>
-  <description>ZooKeeper client port.</description>
-</property>
-<property>
-  <name>hbase.master</name>
-  <value>172.20.0.4:60000</value>
-  <description>HBase Master address.</description>
-</property>
-<property>
-  <name>hbase.rootdir</name>
-  <value>hdfs://172.20.0.4:9000/hbase</value>
-  <description>HDFS path for HBase data.</description>
-</property>
-<property>
-  <name>hbase.security.authentication</name>
-  <value>simple</value>
-  <description>Authentication mode (simple for development).</description>
-</property>
-<property>
-  <name>hbase.regionserver.jmx</name>
-  <value>true</value>
-  <description>Enable JMX for monitoring.</description>
-</property>
-<property>
-  <name>hbase.hregion.majorcompaction</name>
-  <value>604800000</value>
-  <description>7-day compaction interval for storage optimization.</description>
-</property>
+  
+  <property>
+    <name>hbase.rootdir</name>
+    <value>hdfs://mycluster/hbase</value>
+  </property>
+
+  <property>
+    <name>hbase.cluster.distributed</name>
+    <value>true</value>
+  </property>
+  
+  <property>
+    <name>hbase.zookeeper.property.dataDir</name>
+    <value>/usr/local/zookeeper/data</value>
+  </property>
+
+
+  <property>
+    <name>hbase.zookeeper.quorum</name>
+    <value>master1,master2,master3</value>
+  </property>
+  
+  <property>
+    <name>hbase.zookeeper.property.clientPort</name>
+    <value>2181</value>
+  </property>
+
+  <property>
+    <name>hbase.wal.provider</name>
+    <value>filesystem</value>
+  </property>
+
+  <property>
+    <name>hbase.replication</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>hbase.hregion.majorcompaction</name>
+    <value>604800000</value>
+    <description>7-day compaction interval to avoid storms.</description>
+  </property>
+
 </configuration>
   ```
 
@@ -319,7 +325,6 @@ The HA HBase cluster integrates with Hadoop HA on a Docker network (`hbase-net`)
 +---------------------+       +---------------------+
 | HBase Master (1)    |<----->| HBase Master (2)    |
 | 172.20.0.4:60000    |       | 172.20.0.4:60001    |
-| JMX: 10102          |       |                     |
 +---------------------+       +---------------------+
            |                        |
            v                        v
@@ -345,7 +350,6 @@ The HA HBase cluster integrates with Hadoop HA on a Docker network (`hbase-net`)
 
 ### 2.4 Security Considerations
 - **Authentication**: Configured as `simple` for development. For production, use Kerberos (`hbase.security.authentication=kerberos`).
-- **JMX**: Open for simplicity. For production, enable SSL and authentication.
 - **Network**: Docker network isolates components. For production, use firewalls to restrict ports (60000, 2181, 9000, 10102).
 - **Data**: No encryption in development. For production, enable HBase encryption.
 
@@ -451,7 +455,6 @@ get 'webtable', 'org.hbase.www', {COLUMNS => ['contents:html', 'anchor', 'metada
 ```
 - **Monitoring**:
   - HBase UI: `http://172.20.0.4:16010`
-  - JMX: JConsole to `172.20.0.4:10102`
 
 ## 5. Future Improvements
 - **Incoming Links**: Add `in:<reversed_source_url>` to `anchor` for full web graph modeling.
