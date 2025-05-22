@@ -1,5 +1,6 @@
 #!/bin/bash
 
+sleep 5
 if [ "$HBASE_ROLE" = "master" ]; then
   echo "Starting HBase Master..."
   exec $HBASE_HOME/bin/hbase master start

@@ -101,6 +101,7 @@ services:
     volumes:
       - ./hbase/entrypoint.sh:/entrypoint.sh
       - ./hbase/hbase-site.xml:/usr/local/hbase/conf/hbase-site.xml
+      - ./Webtable-Hbase-Engine:/Webtable-Hbase-Engine
     networks:
       - cluster_net
     ports:
@@ -115,6 +116,7 @@ services:
     volumes:
       - ./hbase/entrypoint.sh:/entrypoint.sh
       - ./hbase/hbase-site.xml:/usr/local/hbase/conf/hbase-site.xml
+      - ./Webtable-Hbase-Engine:/Webtable-Hbase-Engine
     networks:
       - cluster_net
     depends_on:
@@ -154,5 +156,3 @@ services:
 networks:
   cluster_net:
     driver: bridge
-
-volumes:

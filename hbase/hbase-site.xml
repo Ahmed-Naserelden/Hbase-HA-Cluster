@@ -11,10 +11,16 @@
   </property>
   
   <property>
+    <name>hbase.zookeeper.property.dataDir</name>
+    <value>/usr/local/zookeeper/data</value>
+  </property>
+
+
+  <property>
     <name>hbase.zookeeper.quorum</name>
     <value>master1,master2,master3</value>
   </property>
-
+  
   <property>
     <name>hbase.zookeeper.property.clientPort</name>
     <value>2181</value>
@@ -28,6 +34,12 @@
   <property>
     <name>hbase.replication</name>
     <value>true</value>
+  </property>
+
+  <property>
+    <name>hbase.hregion.majorcompaction</name>
+    <value>604800000</value>
+    <description>7-day compaction interval to avoid storms.</description>
   </property>
 
 </configuration>
